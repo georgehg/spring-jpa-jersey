@@ -10,7 +10,13 @@ import br.com.cinq.spring.sample.entity.Country;
 public interface CountryRepository extends CrudRepository<Country, Integer> {
 	
 	Optional<Country> findByName(String name);
-
+	
 	List<Country> findByNameContaining(String name);
+	
+	default List<Country> findLikeName(String name) {
+		return findByNameContaining(name);
+	};
 
+	List<Country> findAll();
+	
 }

@@ -1,9 +1,6 @@
 package br.com.cinq.spring.sample.controllers;
 
-import static java.util.stream.Collectors.toList;
-
 import java.util.List;
-import java.util.stream.StreamSupport;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -21,29 +18,26 @@ import br.com.cinq.spring.sample.repository.CountryRepository;
 @RestController
 @RequestMapping("/cities")
 public class CityController {
-	
+
 	@Autowired
-    private CityRepository cityRepository;
-	
+	private CityRepository cityRepository;
+
 	@Autowired
-    private CountryRepository countryRepository;
-	
+	private CountryRepository countryRepository;
+
 	@GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
-	public ResponseEntity<List<City>> getCitiesList(@RequestParam(value = "country", required=false) String country) {
-		
+	public ResponseEntity<?> getCitiesList(@RequestParam(value = "country", required = false) String country) {
+
 		if (country == null) {
-			
-			return new ResponseEntity<List<City>>(
-					StreamSupport.stream(cityRepository.findAll().spliterator(), false).collect(toList()), 
-					HttpStatus.OK);
-			
+
+			return new ResponseEntity<List<City>>(cityRepository.findAll(), HttpStatus.OK);
+
 		} else {
-		
+
 			return new ResponseEntity<List<City>>(
-					cityRepository.findByCountry(countryRepository.findByNameContaining(country)),
-					HttpStatus.OK);
+					cityRepository.findByCountryIn(countryRepository.findLikeName(country)), HttpStatus.OK);
 		}
-		
+
 	}
 
 }

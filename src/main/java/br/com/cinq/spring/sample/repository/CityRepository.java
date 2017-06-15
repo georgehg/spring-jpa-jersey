@@ -11,6 +11,8 @@ public interface CityRepository extends CrudRepository<City, Integer> {
 
 	List<City> findByCountry(Country country);
 	
-	List<City> findByCountry(List<Country> country);
+	List<City> findByCountryIn(List<Country> country);
+	
+	List<City> findAll();
 
 }

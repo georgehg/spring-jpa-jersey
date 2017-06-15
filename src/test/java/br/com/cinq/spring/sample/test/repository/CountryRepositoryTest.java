@@ -1,82 +1,53 @@
 package br.com.cinq.spring.sample.test.repository;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
-import java.util.ArrayList;
 import java.util.List;
 
+import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.IntegrationTest;
+import org.springframework.boot.test.SpringApplicationConfiguration;
+import org.springframework.boot.test.WebIntegrationTest;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
-import br.com.cinq.spring.sample.SampleApplication;
+import br.com.cinq.spring.sample.Application;
 import br.com.cinq.spring.sample.entity.Country;
 import br.com.cinq.spring.sample.repository.CountryRepository;
 
-
-@RunWith(SpringRunner.class)
-@SpringBootTest(classes = SampleApplication.class)
+@RunWith(SpringJUnit4ClassRunner.class)
+@SpringApplicationConfiguration(classes = Application.class)
+@WebIntegrationTest(randomPort = true)
+@IntegrationTest("server.port=9000")
 @ActiveProfiles("unit")
 public class CountryRepositoryTest {
 
 	@Autowired
-	private CountryRepository countryRepository;
-	
-	@Test
-    public void testSaveCountry() {
-		
-    	assertThat(countryRepository).isNotNull();
+	private CountryRepository dao;
 
-    	Country country = Country.of("Argentina");
-    	countryRepository.save(country);
-    	
-    	assertThat(countryRepository.findOne(country.getId())).isEqualTo(country);
-    	
-	}
-	
 	@Test
-    public void testDeleteCountry() {
-		
-    	assertThat(countryRepository).isNotNull();
+	public void testGelAllCountries() {
 
-    	Country country = Country.of("Germany");
-    	countryRepository.save(country);
-    	int countryId = country.getId();
-    	
-    	assertThat(countryRepository.findOne(countryId)).isEqualTo(country);
-    	
-    	countryRepository.delete(countryId);
-    	
-    	assertThat(countryRepository.findOne(countryId)).isNull();
-    	
+		Assert.assertNotNull(dao);
+
+		long count = dao.count();
+
+		Assert.assertTrue(count > 0);
+
+		List<Country> countries = dao.findAll();
+
+		Assert.assertEquals((int) count, countries.size());
 	}
 
 	@Test
-    public void testGelAllCountries() {
+	public void testFindOneCountry() {
 
-    	assertThat(countryRepository).isNotNull();
+		Assert.assertNotNull(dao);
 
-    	int count = (int) countryRepository.count();
-        assertThat(count).isGreaterThan(0);
+		List<Country> countries = dao.findLikeName("Fra");
 
-        List<Country> countries = new ArrayList<Country>();
-        countryRepository.findAll().forEach(countries::add);
-
-        assertThat(countries.size()).isEqualTo(count);
-    }
-
-	@Test
-	public void testFindOneCountry() {	
-
-		assertThat(countryRepository).isNotNull();
-
-		List<Country> countries = countryRepository.findByNameContaining("Fra");
-
-		assertThat(countries.size()).isEqualTo(1);
-		assertThat(countries.get(0).getName()).isEqualTo("France");
+		Assert.assertEquals(1, countries.size());
 
 	}
 

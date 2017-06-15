@@ -17,7 +17,7 @@ public class Country {
 	@GeneratedValue(strategy=GenerationType.AUTO)
 	@Column(name="id")
 	private int id;
-	
+
 	@Column(name="name")
 	private String name;	
 
@@ -32,6 +32,10 @@ public class Country {
 		checkNotNull(name, "Country name can not be null");
 		
 		return new Country(name);
+	}
+	
+	public void setId(int id) {
+		this.id = id;
 	}
 
 	public int getId() {
