@@ -1,10 +1,10 @@
 package br.com.cinq.spring.sample.test;
 
 import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertNotNull;
 import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.document;
 import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.documentationConfiguration;
 import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.get;
+import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.post;
 import static org.springframework.restdocs.operation.preprocess.Preprocessors.preprocessRequest;
 import static org.springframework.restdocs.operation.preprocess.Preprocessors.preprocessResponse;
 import static org.springframework.restdocs.operation.preprocess.Preprocessors.prettyPrint;
@@ -14,9 +14,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import java.io.IOException;
 import java.nio.charset.Charset;
-import java.util.Arrays;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -25,9 +23,6 @@ import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
-import org.springframework.http.converter.HttpMessageConverter;
-import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
-import org.springframework.mock.http.MockHttpOutputMessage;
 import org.springframework.restdocs.JUnitRestDocumentation;
 import org.springframework.restdocs.mockmvc.RestDocumentationResultHandler;
 import org.springframework.test.context.junit4.SpringRunner;
@@ -49,8 +44,6 @@ public class CityControllerTest {
 	
 	private MockMvc mockMvc;
 	
-	private HttpMessageConverter mappingJackson2HttpMessageConverter;
-
 	private MediaType contentType = new MediaType(MediaType.APPLICATION_JSON.getType(),
 			  MediaType.APPLICATION_JSON.getSubtype(),
 			  Charset.forName("utf8"));
@@ -69,22 +62,6 @@ public class CityControllerTest {
 						.apply(documentationConfiguration(this.restDocumentation))
 						.alwaysDo(MockMvcResultHandlers.print())
 						.build();		
-	}
-	
-	@Autowired
-	void setConverters(HttpMessageConverter<?>[] converters) {
-
-		this.mappingJackson2HttpMessageConverter = Arrays.asList(converters).stream()
-				.filter(hmc -> hmc instanceof MappingJackson2HttpMessageConverter).findAny().orElse(null);
-
-		assertNotNull("the JSON message converter must not be null", this.mappingJackson2HttpMessageConverter);
-		
-	}
-	
-	protected String json(Object o) throws IOException {
-		MockHttpOutputMessage mockHttpOutputMessage = new MockHttpOutputMessage();
-		this.mappingJackson2HttpMessageConverter.write(o, MediaType.APPLICATION_JSON, mockHttpOutputMessage);
-		return mockHttpOutputMessage.getBodyAsString();
 	}
 	
 	@Test
@@ -121,6 +98,16 @@ public class CityControllerTest {
 	
 	
 	@Test
+	public void searchCitiesByUnknownCountry() throws Exception {
+
+		//REST API assert
+		this.mockMvc.perform(get("/rest/cities?country={country}", "Marte").contextPath("/rest"))
+				.andExpect(status().isNoContent());
+		
+	}
+	
+	
+	@Test
 	public void searchCitiesByCountryList() throws Exception {
 
 		//REST API assert
@@ -132,4 +119,26 @@ public class CityControllerTest {
 	
 	}
 	
+	
+	@Test
+	public void postCitiesJson() throws Exception {
+		
+		String cities = "[{\"city\":\"São Paulo\", \"country\":\"Brazil\"},"
+						+ "{\"city\":\"Belo Horizonte\", \"country\":\"Brazil\"},"
+						+ "{\"city\":\"Mar del Plata\", \"country\":\"Argentina\"},"
+						+ "{\"city\":\"Vancouver\", \"country\":\"Canadá\"}]";
+		
+		//REST API assert
+		this.mockMvc.perform(post("/rest/cities").contextPath("/rest")
+					.contentType(contentType)
+					.content(cities))
+					.andExpect(status().isCreated());
+		
+		this.mockMvc.perform(get("/rest/cities?country={country}", "Canadá").contextPath("/rest"))
+		.andExpect(status().isOk())
+		.andExpect(content().contentType(contentType))
+		.andExpect(jsonPath("[0].name", is("Vancouver")))
+		.andExpect(jsonPath("[0].country.name", is("Canadá")));
+		
+	}
 }
